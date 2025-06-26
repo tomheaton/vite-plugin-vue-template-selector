@@ -1,0 +1,55 @@
+{
+  "name": "vite-plugin-vue-template-selector",
+  "version": "1.0.0-beta.1",
+  "type": "module",
+  "license": "MIT",
+  "author": "Tom Heaton",
+  "description": "A Vite plugin for Vue.js that allows dynamic template selection at build time.",
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "vue",
+    "template",
+    "template-selector"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomheaton/vite-plugin-vue-template-selector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tomheaton/vite-plugin-vue-template-selector/issues"
+  },
+  "homepage": "https://github.com/tomheaton/vite-plugin-vue-template-selector",
+  "peerDependencies": {
+    "@vue/compiler-dom": "^3.5.17",
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0",
+    "vue": "^3.5.17"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.0.0",
+    "vue": "^3.5.17"
+  }
+}
