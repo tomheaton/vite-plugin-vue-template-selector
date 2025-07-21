@@ -62,7 +62,21 @@ export default defineConfig({
 
 ```ts
 export type Options = {
-  name?: string; // selected template name, defaults to "default"
+  /**
+   * The name of the template to select.
+   * If not provided, the first template will be used.
+   */
+  name?: string;
+  /**
+   * The name of the template to use as a fallback if the primary is not found.
+   * If not provided, the first template will be used.
+   */
+  fallback?: string;
+  /**
+   * Whether to throw an error if the template is not found.
+   * If false, a warning will be logged instead.
+   */
+  strict?: boolean;
 };
 ```
 

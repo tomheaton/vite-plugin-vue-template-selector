@@ -19,3 +19,6 @@ logs/
 # IDE
 .vscode/
 .idea/
+
+# Coverage reports
+coverage/

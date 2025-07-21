@@ -9,7 +9,21 @@ import type { Plugin } from "vite";
 import { type SFCTemplateBlock } from "vue/compiler-sfc";
 
 export type Options = {
+  /**
+   * The name of the template to select.
+   * If not provided, the first template will be used.
+   */
   name?: string;
+  /**
+   * The name of the template to use as a fallback if the primary is not found.
+   * If not provided, the first template will be used.
+   */
+  fallback?: string;
+  /**
+   * Whether to throw an error if the template is not found.
+   * If false, a warning will be logged instead.
+   */
+  strict?: boolean;
 };
 
 export default function vueTemplateSelector(options: Options = {}): Plugin {
@@ -21,11 +35,19 @@ export default function vueTemplateSelector(options: Options = {}): Plugin {
       }
 
       const errors: CompilerError[] = [];
+
       const ast = parse(code, {
         parseMode: "sfc",
         prefixIdentifiers: true,
         onError: errors.push,
       });
+
+      if (errors.length) {
+        throw new Error(
+          `Failed to parse Vue file "${id}":\n` +
+            errors.map((e) => `- ${e.message}`).join("\n"),
+        );
+      }
 
       const templates: SFCTemplateBlock[] = [];
 
@@ -47,41 +69,82 @@ export default function vueTemplateSelector(options: Options = {}): Plugin {
         templates.push(templateBlock);
       });
 
+      // no templates found, let Vite handle it
       if (templates.length === 0) {
         return;
       }
 
-      if (templates.length === 1) {
-        return;
+      // check for duplicate template names
+      const nameCounts = templates.reduce(
+        (acc, t) => {
+          const name =
+            typeof t.attrs.name === "string" ? t.attrs.name : "<unnamed>";
+          acc[name] = (acc[name] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      for (const [name, count] of Object.entries(nameCounts)) {
+        if (count > 1) {
+          throw new Error(`Duplicate <template name="${name}"> found in ${id}`);
+        }
       }
 
-      let template = templates.find((t) => t.attrs.name === options.name);
+      templates.forEach((t) => {
+        if (!t.attrs.name) {
+          console.warn(
+            `Unnamed <template> found in ${id}; consider adding a name.`,
+          );
+        }
+      });
+
+      // TODO: validate options?
+      const { name, fallback, strict = false } = options;
+
+      let template = templates.find((t) => t.attrs.name === name);
+
+      if (!template && fallback) {
+        template = templates.find((t) => t.attrs.name === fallback);
+        if (!template && strict) {
+          throw new Error(
+            `No template found with name "${name}" or fallback "${fallback}" in ${id}`,
+          );
+        }
+      }
+
+      if (!template && strict) {
+        throw new Error(`No template found with name "${name}" in ${id}`);
+      }
+
       if (!template) {
-        console.warn(`No template found with name "${options.name}" in ${id}`);
+        console.warn(
+          `No template found with name "${name}" in ${id}, falling back to first template`,
+        );
         template = templates[0];
       }
 
-      console.log(`Using template "${template.attrs.name}" from ${id}`);
+      // Remove all templates by slicing them out based on location, in descending order of start offsets
+      const sortedTemplates = templates
+        .slice()
+        .sort((a, b) => b.loc.start.offset - a.loc.start.offset);
 
       let transformed = code;
-      templates.forEach((template) => {
-        transformed = transformed.replace(template.content, "");
-      });
-
-      const templateRegex = /<template><\/template>/gi;
-      transformed = transformed.replaceAll(templateRegex, "");
-
-      const templateRegexWithName = /<template name="[^"]+"><\/template>/gi;
-      transformed = transformed.replaceAll(templateRegexWithName, "");
+      for (const { loc } of sortedTemplates) {
+        transformed =
+          transformed.slice(0, loc.start.offset) +
+          transformed.slice(loc.end.offset);
+      }
 
       const finalCode =
         `<template>\n${template.content.trim()}\n</template>\n\n` +
+        // `<template>${template.content.trim()}</template>` +
         transformed.trim();
-
-      console.log(`Transformed code for ${id}:\n${finalCode}`);
 
       return {
         code: finalCode,
+        // TODO: generate source map?
+        sourceMap: null,
       };
     },
   };
