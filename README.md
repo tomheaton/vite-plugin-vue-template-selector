@@ -4,19 +4,37 @@ A Vite plugin for Vue.js that allows dynamic template selection at build time.
 
 ## Usage
 
+### Install the plugin
+
+```bash
+# Using npm
+npm install vite-plugin-vue-template-selector --save-dev
+
+# Using yarn
+yarn add vite-plugin-vue-template-selector --dev
+
+# Using pnpm
+pnpm add vite-plugin-vue-template-selector --save-dev
+```
+
 ### Select a template by name
 
 ```ts
 // vite.config.ts
+import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
 import vueTemplateSelector from "vite-plugin-vue-template-selector";
 
-export default {
+// https://vite.dev/config/
+export default defineConfig({
   plugins: [
+    // NOTE: The order of plugins matters. Ensure this plugin is before the Vue plugin.
     vueTemplateSelector({
       name: "default",
     }),
+    vue(),
   ],
-};
+});
 ```
 
 ### Create multiple templates
