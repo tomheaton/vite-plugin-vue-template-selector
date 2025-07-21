@@ -94,7 +94,7 @@ export default function vueTemplateSelector(options: Options = {}): Plugin {
  */
 function createTemplateBlock(
   node: ElementNode,
-  source: string
+  source: string,
 ): SFCTemplateBlock {
   const loc = node.innerLoc!;
   const attrs: Record<string, string | true> = {};
